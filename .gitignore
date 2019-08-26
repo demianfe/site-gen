@@ -1,5 +1,7 @@
 *.*~
 #*.*
-dist/js/index.js
-dist/tmp
- 
+
+src/baseapp/public/js/index.js
+src/site_gen
+examples/todoapp/public/js/*.js
+

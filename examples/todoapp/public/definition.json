@@ -1,0 +1,50 @@
+{
+  "app": "todoApp",
+  "title": "Todo App",
+  "header": {
+    "alternative": "Todo App.",
+    "image": ""
+  },
+  "menu": {
+    "class": "navbar navbar-expand-lg navbar-dark fixed-top",
+    "children": [
+      {"section": "#todos",
+       "title": "TODOS"
+      }
+    ]
+  },
+  "body": {
+    "children": [
+      { "edit":
+        {
+          "model": "todo",
+          "label": "TODOs",
+          "children": [
+            {
+              "name" : "name",
+              "label": "Name",
+              "type": "string",
+              "ui-type": "input",
+              "events": ["onkeyup"],
+              "value": "data of the input"
+            },
+            {
+              "name" : "description",
+              "label" : "Description",
+              "type": "string",
+              "ui-type": "text",
+              "events": ["onkeydown"]
+            }
+          ]
+        }
+      },
+      {
+        "myGrid": {
+          "model": "todo",
+          "label": "Todo List"
+        }
+      }
+    ]
+  },
+  "footer": {}
+}
