@@ -55,9 +55,13 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
       result.addAttributes el
   except:
     # TODO:
-    let msg = getCurrentExceptionMsg()
+    let
+      e = getCurrentException()
+      msg = e.getStackTrace() #getCurrentExceptionMsg()
+    echo msg
     result = buildHtml(tdiv):
-      h3: text "Error: Element build fail: " & $el.kind
+      h4: text "Error -  Element build fail: " & $el.kind
+      h6: text getCurrentExceptionMsg()
       p: text msg
 
         
