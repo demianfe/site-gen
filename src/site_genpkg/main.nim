@@ -29,7 +29,6 @@ var
 proc reRender*()=
   # wrap and expose redraw
   `kxi`.redraw()
-  # ctxt.state["_renderData"] = %*{}
 
 
 proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode) =
@@ -96,8 +95,8 @@ proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev:
       payload["eventhandler"] = %($n.getAttr "eventhandler")
       callEventListener(payload, ctxt.actions)
       
-      if customNav == true:
-        payload = ctxt.navigate(ctxt, payload, viewid)
+    if customNav == true:
+      payload = ctxt.navigate(ctxt, payload, viewid)
       
           
 proc setHashRoute(rd: RouterData) =
@@ -110,7 +109,7 @@ proc setHashRoute(rd: RouterData) =
 
 
 proc showError(): VNode =
-  result = buildHtml(tdiv(class="container-fluid")):
+  result = buildHtml(tdiv(class="container")):
     tdiv(class="alert alert-danger",role="alert"):
       h3:
         text "Error:"
@@ -141,13 +140,15 @@ proc handleCreateDomException(): Vnode =
     echo(msg)
     echo("================================================================================")
   else:
+    echo getCurrentExceptionMsg()
     msg = "Builder Error: Something went wrong."
     ctxt.state["error"] = %msg
     result = showError()
 
+
 # uses app instead of ctxt
 proc createAppDOM(rd: RouterData): VNode =
-  setHashRoute(rd)
+#  setHashRoute(rd)
   try:
     if ctxt.state.hasKey("error"):
       result = showError()

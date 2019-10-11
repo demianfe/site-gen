@@ -51,19 +51,26 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
         if not vkid.isNil:
           result.add vkid
     else:
-      result = wb.callBuilder(el)
-      result.addAttributes el
+      if not el.builder.isNil:
+        result = wb.callBuilder(el)
+        result.addAttributes el
+      
   except:
     # TODO:
-    let
-      e = getCurrentException()
+    var msg = ""
+    let e = getCurrentException()
+    if not e.isNil:
       msg = e.getStackTrace() #getCurrentExceptionMsg()
+    else:
+      msg =  getCurrentExceptionMsg()
+      
     echo msg
     result = buildHtml(tdiv):
       h4: text "Error -  Element build fail: " & $el.kind
       h6: text getCurrentExceptionMsg()
       p: text msg
-
+    
+  
         
 proc buildBody(body: UiElement, viewid, route: string): VNode =    
   result = buildElement(body, viewid)
@@ -79,17 +86,13 @@ proc updateUI*(app: var App): VNode =
       
   result = newVNode VnodeKind.tdiv
   result.class = "container"
-
+  
   if app.ctxt.messages.len > 0:
     var c = 0
     for m in app.ctxt.messages:
       result.add buildElement(Message(m.kind, m.content, id= $c), viewid)
       c += 1
   
-  # if state.hasKey "message":
-  #   var msg = Message(state["message"].getStr, id=genUUID())
-  #   result.add buildElement(msg, viewid)
-
   if state.hasKey("route") and state["route"].getStr != "":
     let
       sr = state["route"].getStr.split("?")
@@ -105,14 +108,17 @@ proc updateUI*(app: var App): VNode =
 
     app.ctxt.request = req
     # grab the first part of the route
-    
-    let splitRoute = sr[0].split "/"
-    # just asume first item is `#`.
-    # use `#` in the ui definition to know it is a route.
-    route = splitRoute[0..1].join "/"
-    if splitRoute.len > 2: action = splitRoute[2]
-
-  for l in app.layout:
+    if sr[0].find("/") == 1:
+      let splitRoute = sr[0].split "/"
+      echo splitRoute
+      # just asume first item is `#`.
+      # use `#` in the ui definition to know it is a route.
+      route = splitRoute[0..1].join "/"
+      if splitRoute.len > 2: action = splitRoute[2]
+    else:
+      action = sr[0]
+      
+  for l in app.layout.children:
     var el = l
     el.viewid = viewid    
     case l.kind:
@@ -120,8 +126,7 @@ proc updateUI*(app: var App): VNode =
         let h = buildElement(l, viewid)
         if not h.isNil:
           result.add h
-      of UiElementKind.kMenu:
-        result.add wb.callBuilder(el)
+        
       of UiElementKind.kBody:
         case action
         of "edit":
@@ -135,10 +140,12 @@ proc updateUI*(app: var App): VNode =
              let ui = app.ctxt.uicomponents[cName](app.ctxt)
              result.add buildBody(ui, viewid, route)
              result.addAttributes el
+                       
+          elif app.ctxt.actions.haskey cName:
+            app.ctxt.actions[cName](%*{"querystring": req.queryString})
           else:
-            # try to despach to event handler
-            if app.ctxt.actions.haskey cName:
-              app.ctxt.actions[cName](%*{"querystring": req.queryString})  
+            echo "nothing to build."
+            
       else:
         # TODO:
         echo "Error: Invalid Layout section."

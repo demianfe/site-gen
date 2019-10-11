@@ -28,7 +28,7 @@ type
   App* = ref object 
     id*: string
     title*: string
-    layout*: seq[UiElement] # header, menu, body, footer
+    layout*: UiElement # header, menu, body, footer
     state*: string
     ctxt*: AppContext
     wb*: WebBuilder
