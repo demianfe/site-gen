@@ -12,7 +12,7 @@ type
     kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink, kInputText,
     kList, kListItem, kForm, kCheckBox, kDropdown, kDropdownItem, kPanel, kTile,
     kTable, kColumn, kRow, kRadio, kRadioGroup, kParagraph, kTitle,kBreadcrum,
-    kItem, kHero, kMessage
+    kItem, kHero, kMessage, kLoading
 
   UiElement* = ref UiElementObj
 
@@ -41,7 +41,7 @@ type
     children*: seq[UiElement]
     events*: seq[UiEvent]
     builder*: proc(wb: WebBuilder, el: UiElement): Vnode
-    
+
     
 proc addChild*(parent: var UiElement, child: UiElement) =
   parent.children.add child
@@ -53,6 +53,18 @@ proc add*(parent: var UiElement, child: UiElement) =
 
 proc build*(wb: WebBuilder, el: UiElement): VNode =
   result = wb.builder(wb, el)
+
+
+proc `$`*(el: UiElement): string =
+  result = "id: " & el.id
+  result.add "\nkind: " & $el.kind
+  result.add "\nlabel: " & el.label
+  result.add "\nvalue: " & el.value
+  result.add "\nAttributes:" & $el.attributes
+  result.add "\nEvents:" & $el.events
+  result.add "\nChildren:"
+  for c in el.children:
+    result.add " " & $c.kind
 
 
 proc newWebBuilder*(handler: proc(uiev: uielement.UiEvent,
@@ -78,6 +90,7 @@ proc addAttributes*(n: var Vnode, el: UiElement) =
   if el.id!="": n.id = el.id
   if el.value != "":
     n.setAttr "value", el.value
+  
   if el.field != "":
     n.setAttr "field", el.field
   
@@ -142,8 +155,8 @@ proc newUiElement*(kind: UiElementKind, id, label: string): UiElement =
     result.label = label     
   if id != "":
     result.id = id
-
-
+    
+    
 proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]): UiElement =
   result = newUiElement(kind)
   if label != "":
@@ -156,7 +169,7 @@ proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]):
     ev.kind = evk
     result.events.add ev
 
-  
+      
 proc newUiElement*(kind: UiElementKind, label="",
                    attributes:Table[string, string], events: seq[UiEventKind]): UiElement =
     

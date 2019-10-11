@@ -4,15 +4,14 @@ import karax / [vdom, kdom, karaxdsl]
 import ../uielement
 
 # import modular builders
-import input, button, form, nav, input, link, menu, dropdown, tile, panel
+import input, button, form, nav, input, menu, dropdown, tile, panel
 
 
 var buildersTable = initTable[UiElementKind, proc(wb: WebBuilder, el: UiElement): Vnode]()
 buildersTable.add UiElementKind.kInputText, buildInputText
 buildersTable.add UiElementKind.kForm, buildForm
-buildersTable.add UiElementKind.kLink, buildLink
 buildersTable.add UiElementKind.kButton, buildButton
-buildersTable.add UiElementKind.kNavBar, buildNav
+#buildersTable.add UiElementKind.kNavBar, buildNav
 buildersTable.add UiElementKind.kMenu, buildMenu
 buildersTable.add UiElementKind.kDropdown, buildDropdown
 buildersTable.add UiElementKind.kPanel, buildPanel
@@ -20,17 +19,19 @@ buildersTable.add UiElementKind.kTile, buildTile
 
 
 proc callBuilder*(wb: WebBuilder, elem: UiElement): VNode =
+
   var el = elem
   if not el.builder.isNil:
     result = el.builder(wb, elem)
   elif buildersTable.haskey el.kind:
     result = buildersTable[el.kind](wb, elem)
-  elif el.kind == UiElementKind.kComponent:
+  elif el.kind == UiElementKind.kComponent and el.attributes.len > 0:
     result = buildHtml(tdiv())
-    # # build its childs
-    # for kid in el.children:
-    #   echo kid.kind
-    #   result = callBuilder(wb, kid)
+    result.addAttributes el   
+
+  elif el.kind == UiElementKind.kComponent or el.kind == UiElementKind.kComponent:
+    for kid in el.children:
+      result = callBuilder(wb, kid)
 
   if not result.isNil:
     for elkid in el.children:

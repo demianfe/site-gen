@@ -4,6 +4,10 @@
 import ../uielement
 
 
+proc Component*(): UiElement =
+  result = newUiElement(UiElementKind.kComponent)
+
+
 proc Footer*(): UiElement =
   result = newUiElement(UiElementKind.kFooter)
 

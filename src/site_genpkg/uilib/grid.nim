@@ -1,8 +1,7 @@
 
-import karax / [kdom, vdom]
+import karax / [kdom, vdom, karaxdsl]
 
 import site_genpkg / uielement
-import site_genpkg / builder / webbuilder
 
 
 proc buildGrid*(wb: WebBuilder, el: UiElement): VNode =

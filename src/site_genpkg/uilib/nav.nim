@@ -1,5 +1,33 @@
 
 import ../uielement
+import baseui
+import karax / [vdom, karaxdsl]
+
+
+proc NavItem*(label, value: string): UiElement =
+  result = Item("Users", "show_users")
+  result.builder = proc(wb: WebBuilder, el: UiElement): VNode =
+                       buildHtml():
+                         if el.hasAttribute("active"):
+                           li(class="nav-item active"):
+                             a(href=el.value): text el.label
+                         else:
+                           li(class="nav-item"):
+                             a(href=el.value): text el.label
+  
+
+proc buildNav(wb: WebBuilder, el: UiElement): VNode =
+  # TODO: if nav var has more complex children(for ex: acordion), process them
+  result = buildHtml(ul(class="navbar"))
+    # for c in el.children:
+    #   if c.kind == UiElementKind.kItem:
+    #     if c.hasAttribute("active"):
+    #       li(class="nav-item active"):
+    #         a(href=c.value): text c.label
+    #     else:
+    #       li(class="nav-item"):
+    #         a(href=c.value): text c.label
+            
 
 proc NavSection*(navItems: seq[UiElement] = @[]): UiElement =
   result = newUiElement(UiElementKind.kNavSection)
@@ -13,6 +41,7 @@ proc NavSection*(navItems: seq[UiElement] = @[]): UiElement =
   result.children = navItems
 
 
-proc NavBar*(sections: seq[UiElement] = @[]): UiElement =
+proc NavBar*(): UiElement =
   result = newUiElement(UiElementKind.kNavBar)
-  result.children = sections
+  result.builder = buildNav
+  
