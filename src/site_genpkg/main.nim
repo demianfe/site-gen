@@ -178,7 +178,6 @@ proc createApp*(a: var App) =
   app = a
   ctxt = app.ctxt 
   initNavigation()
-  ctxt.components = initComponents(ctxt.components)
   if ctxt.navigate.isNil:
     ctxt.navigate = navigate
   else:

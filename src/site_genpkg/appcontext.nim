@@ -1,5 +1,7 @@
 
-import json, tables, tstore, uielement
+import json, tables, tstore, sequtils
+import uielement
+
 
 type
   MessageKind* = enum
@@ -14,7 +16,7 @@ type
 
   AppContext* = ref object # of RootObj
     state*: JsonNode
-    components*: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
+    # components*: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
     uicomponents*: Table[string, proc(ctxt: AppContext): UiElement]
     actions*: Table[cstring, proc(payload: JsonNode)]
     ignoreField*: proc(field: string): bool # proc that returns true if the field should be ignored
@@ -24,14 +26,13 @@ type
     store*: Store
     request*: Request
     messages*: seq[AppMessage]
-      
+
   App* = ref object 
     id*: string
     title*: string
-    layout*: UiElement # header, menu, body, footer
+    layout*: UiElement 
     state*: string
     ctxt*: AppContext
-    wb*: WebBuilder
     
 
 proc newMessage*(content: string, kind: MessageKind): AppMessage =
