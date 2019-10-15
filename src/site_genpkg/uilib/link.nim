@@ -5,7 +5,7 @@ import baseui
 import site_genpkg / uielement
 
 
-proc buildLink*(wb: WebBuilder, el: UiElement): Vnode =
+proc buildLink(wb: WebBuilder, el: UiElement): Vnode =
   let action = el.getAttribute("action")
   var link = "#/" & el.value
   if action != "":

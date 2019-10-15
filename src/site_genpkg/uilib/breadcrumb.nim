@@ -1,10 +1,10 @@
 
-import ../uielement
 import karax / [vdom, karaxdsl]
+import ../uielement
 
 
 proc buildBreadcrumb(wb: WebBuilder, el: UiElement): Vnode =
-  result = buildHtml tdiv(class=""):
+  result = buildHtml tdiv():
     ul(class="breadcrumb"):
       for child in el.children:
         li(class="breadcrumb-item"):

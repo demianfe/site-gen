@@ -10,13 +10,26 @@ proc builder*(wb: WebBuilder, el: UiElement): Vnode =
     label = buildHtml label(class = "form-checkbox"): text el.label
     input = buildHtml input(`type`="checkbox", class = "form-input", id = el.id, placeholder = el.label)
     i = buildHtml italic(class="form-icon")
-        
   input.addAttributes el
-  input.addEvents wb, el
-  
+  input.addEvents wb, el  
   label.add input
   label.add i
   result.add label
+
+# proc builder*(el: UiElement): Vnode =
+#   result = buildHtml tdiv(class="form-group")
+#   var
+#     label = buildHtml label(class = "form-checkbox"): text el.label
+#     input = buildHtml input(`type`="checkbox", class = "form-input", id = el.id, placeholder = el.label)
+#     i = buildHtml italic(class="form-icon")
+        
+#   input.addAttributes el
+#   # input.addEvents wb, el
+  
+#   label.add input
+#   label.add i
+#   result.add label
+
 
 
 proc CheckBox*(id, label = ""): UiElement =

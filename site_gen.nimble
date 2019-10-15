@@ -13,5 +13,4 @@ installDirs   = @["site_genpkg", "baseapp"]
 
 requires "nim >= 0.19.0"
 requires "https://github.com/demianfe/karax.git"
-
-
+requires "https://github.com/Synarchys/dataflow"

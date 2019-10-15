@@ -1,10 +1,10 @@
 
 import sequtils, tables, json
 import karax / vdom
+#import appcontext
 
 when defined(js):
   import karax / kdom
-  
 
 type
   UiElementKind* = enum
@@ -25,9 +25,9 @@ type
     handler*: string # a key in the actions table
     
   WebBuilder* = object
-    eventsMap*: Table[uielement.UiEventKind, EventKind]
-    handler*: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
-    builder*: proc(wb: WebBuilder, el: UiElement): VNode
+   eventsMap*: Table[uielement.UiEventKind, EventKind]
+   handler*: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
+   builder*: proc(wb: WebBuilder, el: UiElement): VNode
     
   UiElementObj* = object
     id*: string
@@ -41,7 +41,8 @@ type
     children*: seq[UiElement]
     events*: seq[UiEvent]
     builder*: proc(wb: WebBuilder, el: UiElement): Vnode
-
+    #builder*: proc(el: UiElement): Vnode
+    # builder*: proc(ctxt: AppContext, el: UiElement): Vnode
     
 proc addChild*(parent: var UiElement, child: UiElement) =
   parent.children.add child
@@ -54,7 +55,7 @@ proc add*(parent: var UiElement, child: UiElement) =
 proc build*(wb: WebBuilder, el: UiElement): VNode =
   result = wb.builder(wb, el)
 
-
+  
 proc `$`*(el: UiElement): string =
   result = "id: " & el.id
   result.add "\nkind: " & $el.kind
@@ -66,12 +67,10 @@ proc `$`*(el: UiElement): string =
   for c in el.children:
     result.add " " & $c.kind
 
-
 proc newWebBuilder*(handler: proc(uiev: uielement.UiEvent,
                                   el: UiElement, viewid: string): proc(ev: Event, n: VNode)): WebBuilder =
   result = WebBuilder()
-  result.handler = handler
-  
+  result.handler = handler  
   for uievk in uielement.UiEventKind:
     for kev in EventKind:
       if $kev == ("on" & $uievk):
@@ -90,12 +89,10 @@ proc addAttributes*(n: var Vnode, el: UiElement) =
   if el.id!="": n.id = el.id
   if el.value != "":
     n.setAttr "value", el.value
-  
-  if el.field != "":
-    n.setAttr "field", el.field
-  
-  for k, v in el.attributes.pairs:
-    n.setAttr(k, v)
+#   if el.field != "":
+#     n.setAttr "field", el.field
+#   for k, v in el.attributes.pairs:
+#     n.setAttr(k, v)
 
     
 proc hasAttribute*(el: UiElement, attr: string): bool =
@@ -171,8 +168,7 @@ proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]):
 
       
 proc newUiElement*(kind: UiElementKind, label="",
-                   attributes:Table[string, string], events: seq[UiEventKind]): UiElement =
-    
+                   attributes:Table[string, string], events: seq[UiEventKind]): UiElement =    
   result = newUiElement(kind, label = label, events = events)
   result.kind = kind
   result.attributes = attributes    
