@@ -79,7 +79,6 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
       p: text msg
     
 
-
 proc updateUI*(app: var App): VNode =
   var
     state = app.ctxt.state
@@ -121,21 +120,18 @@ proc updateUI*(app: var App): VNode =
       if splitRoute.len > 2: action = splitRoute[2]
     else:
       action = sr[0]
-      
-  for l in app.layout.children:
-    let h = buildElement(l, viewid)
-    if not h.isNil:
-      result.add h
-      
-      
+
+  let h = buildElement(app.layout(app.ctxt), viewid)
+  if not h.isNil:
+    result.add h
+            
     # var el = l
     # el.viewid = viewid
     # case l.kind:
     #   of UiElementKind.kHeader:
     #     let h = buildElement(l, viewid)
     #     if not h.isNil:
-    #       result.add h
-        
+    #       result.add h        
     #   of UiElementKind.kBody:
     #     case action
     #     of "edit":

@@ -30,7 +30,7 @@ type
   App* = ref object 
     id*: string
     title*: string
-    layout*: UiElement 
+    layout*: proc(ctxt: AppContext): UiElement
     state*: string
     ctxt*: AppContext
     
