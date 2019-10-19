@@ -91,8 +91,8 @@ proc addAttributes*(n: var Vnode, el: UiElement) =
     n.setAttr "value", el.value
 #   if el.field != "":
 #     n.setAttr "field", el.field
-#   for k, v in el.attributes.pairs:
-#     n.setAttr(k, v)
+  for k, v in el.attributes.pairs:
+    n.setAttr(k, v)
 
     
 proc hasAttribute*(el: UiElement, attr: string): bool =

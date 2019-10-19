@@ -148,7 +148,7 @@ proc handleCreateDomException(): Vnode =
 
 # uses app instead of ctxt
 proc createAppDOM(rd: RouterData): VNode =
-#  setHashRoute(rd)
+  setHashRoute(rd)
   try:
     if ctxt.state.hasKey("error"):
       result = showError()
