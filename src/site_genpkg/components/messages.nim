@@ -1,6 +1,7 @@
 
 import json, tables, sequtils, times, strutils
-import ../ui_utils
+import ../ui_utils, ../uielement
+
 
 proc UIMessages*(ctxt: AppContext, def: JsonNode, data: JsonNode = nil): JsonNode =
   # data message:

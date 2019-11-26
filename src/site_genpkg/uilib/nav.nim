@@ -4,9 +4,9 @@ import baseui
 import karax / [vdom, karaxdsl]
 
 
-proc NavItem*(label, value: string): UiElement =
-  result = Item("Users", "show_users")
-  result.builder = proc(wb: WebBuilder, el: UiElement): VNode =
+proc NavItem*(ctxt: AppContext, label, value: string): UiElement =
+  result = Item(ctxt, "Users", "show_users")
+  result.builder = proc(el: UiElement): VNode =
                        buildHtml():
                          if el.hasAttribute("active"):
                            li(class="nav-item active"):
@@ -16,7 +16,7 @@ proc NavItem*(label, value: string): UiElement =
                              a(href=el.value): text el.label
   
 
-proc buildNav(wb: WebBuilder, el: UiElement): VNode =
+proc buildNav(el: UiElement): VNode =
   # TODO: if nav var has more complex children(for ex: acordion), process them
   result = buildHtml(ul(class="navbar"))
     # for c in el.children:

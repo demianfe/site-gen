@@ -1,32 +1,31 @@
 
 import json, jsffi, tables, strutils, unicode
 
-import appcontext
-export appcontext
+# import appcontext
+# export appcontext
 
 
-proc ignoreField*(ctxt: AppContext, key: string): bool =
-  # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
-  #returns true if the row has to be ignored
-  if not ctxt.ignoreField.isNil:
-    result = ctxt.ignoreField(key)
-  else:
-    if key == "id" or key == "relations" or key == "type" or
-       key.contains("_id") or key.contains("id_"):
-      result = true
+# proc ignoreField*(ctxt: AppContext, key: string): bool =
+#   # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
+#   #returns true if the row has to be ignored
+#   if not ctxt.ignoreField.isNil:
+#     result = ctxt.ignoreField(key)
+#   else:
+#     if key == "id" or key == "relations" or key == "type" or
+#        key.contains("_id") or key.contains("id_"):
+#       result = true
 
 
 proc genLabel(text: string): string =
   result = ""
   for i in text.split "_":
     result = result & " " &  (capitalize i)
-
       
-proc labelFormat*(ctxt: AppContext, text: string): string =
-  if not ctxt.labelFormat.isNil:
-    result = ctxt.labelFormat text
-  else:
-    result = genLabel text
+# proc labelFormat*(ctxt: AppContext, text: string): string =
+#   if not ctxt.labelFormat.isNil:
+#     result = ctxt.labelFormat text
+#   else:
+#     result = genLabel text
       
 
 proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): JsonNode =

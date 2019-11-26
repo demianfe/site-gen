@@ -4,7 +4,7 @@ import karax / [kdom, vdom, karaxdsl]
 import site_genpkg / uielement
 
 
-proc buildGrid(wb: WebBuilder, el: UiElement): VNode =
+proc buildGrid(el: UiElement): VNode =
   result = buildHtml():
     tdiv(class="container"):
       tdiv(class="columns"):

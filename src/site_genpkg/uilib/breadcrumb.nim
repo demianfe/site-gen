@@ -3,7 +3,7 @@ import karax / [vdom, karaxdsl]
 import ../uielement
 
 
-proc buildBreadcrumb(wb: WebBuilder, el: UiElement): Vnode =
+proc buildBreadcrumb(el: UiElement): Vnode =
   result = buildHtml tdiv():
     ul(class="breadcrumb"):
       for child in el.children:
@@ -11,6 +11,6 @@ proc buildBreadcrumb(wb: WebBuilder, el: UiElement): Vnode =
           a(href="#"): text child.label
           
 
-proc Breadcrumb*(): UiElement =
-  result = newUiElement(UiElementKind.kBreadcrum)
+proc Breadcrumb*(ctxt: AppContext): UiElement =
+  result = newUiElement(ctxt, UiElementKind.kBreadcrum)
   result.builder = buildBreadcrumb

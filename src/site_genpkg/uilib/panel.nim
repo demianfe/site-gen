@@ -6,14 +6,14 @@ proc buildPanelNav(el: UiElementKind): Vnode =
   result = buildHtml tdiv(class="panel-nav")
 
 
-proc buildChildren(parent: Vnode, wb: WebBuilder, el: UiElement) =
+proc buildChildren(parent: Vnode, el: UiElement) =
   for c in el.children:
-    var vn = wb.build c
+    var vn = c.builder c
     if not vn.isNil:
       parent.add vn
   
   
-proc buildPanel(wb: WebBuilder, el: UiElement): Vnode =
+proc buildPanel(el: UiElement): Vnode =
   var b, h, f: VNode
   
   for c in el.children:
@@ -24,18 +24,18 @@ proc buildPanel(wb: WebBuilder, el: UiElement): Vnode =
       for hkid in c.children:
         if hkid.kind == UiElementKind.kTitle:
           var t = buildHtml tdiv(class="panel-title")
-          t.add wb.build hkid
+          t.add hkid.builder hkid
           h.add t
         else:
-          h.add wb.build hkid
+          h.add hkid.builder hkid
         
     if c.kind == UiElementKind.kBody:
       b = buildHtml tdiv(class="panel-body")
-      buildChildren(b, wb, c)
+      buildChildren(b, c)
       
     elif c.kind == UiElementKind.kFooter:
       f = buildHtml tdiv(class="panel-footer")
-      buildChildren(f, wb, c)
+      buildChildren(f, c)
   
   result = buildHtml():
     tdiv(class="panel"):

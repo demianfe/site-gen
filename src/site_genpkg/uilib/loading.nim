@@ -8,7 +8,7 @@ type
   LoadingSize* = enum
     small, large
 
-proc builder*(wb: WebBuilder, el: UiElement): Vnode =
+proc builder*(el: UiElement): Vnode =
   result = buildHtml tdiv(class="loading loading-lg")
   result.addAttributes el
 

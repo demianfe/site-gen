@@ -1,6 +1,6 @@
 
 import json, tables, sequtils, strutils, unicode
-import ../ui_utils
+import ../ui_utils, ../uielement
 
 # List based in the model object with a select button
 

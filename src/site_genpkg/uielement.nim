@@ -1,12 +1,43 @@
 
-import sequtils, tables, json
-import karax / vdom
-#import appcontext
+import strutils, sequtils, tables, json, tstore
+import karax / [vdom, karaxdsl, kdom]
 
-when defined(js):
-  import karax / kdom
+include karax / prelude
+import karax / prelude
+
+import listeners
+
 
 type
+  MessageKind* = enum
+    normal, success, warning, error, primary
+    
+  AppMessage* = ref object
+    tilte*, content*: string
+    kind*: MessageKind
+
+  AppContext* = ref object of RootObj
+    state*: JsonNode
+#    components*: Table[string, proc(ctxt: AppContext): UiElement]
+    actions*: Table[cstring, proc(payload: JsonNode)]
+    ignoreField*: proc(field: string): bool # proc that returns true if the field should be ignored
+    labelFormat*: proc(text: string): string
+    navigate*: proc(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNode # returns the new payload
+    store*: Store
+    queryString*: OrderedTable[string, string]
+    route*: string
+    messages*: seq[AppMessage]
+    eventHandler*: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
+    eventsMap*: Table[uielement.UiEventKind, EventKind]
+    render*: proc()
+    
+  App* = ref object 
+    id*: string
+    title*: string
+    layout*: proc(ctxt: AppContext): UiElement
+    state*: string
+    ctxt*: AppContext
+
   UiElementKind* = enum
     kComponent, kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
     kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink, kInputText,
@@ -24,12 +55,9 @@ type
     targetKind*: EventKind
     handler*: string # a key in the actions table
     
-  WebBuilder* = object
-   eventsMap*: Table[uielement.UiEventKind, EventKind]
-   handler*: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
-   builder*: proc(wb: WebBuilder, el: UiElement): VNode
-    
-  UiElementObj* = object
+  UiElementObj = object
+    elid: string
+    parentid: string
     id*: string
     viewid*: string
     kind*: UiElementKind
@@ -40,24 +68,40 @@ type
     attributes*: Table[string, string]
     children*: seq[UiElement]
     events*: seq[UiEvent]
-    builder*: proc(wb: WebBuilder, el: UiElement): Vnode
-    #builder*: proc(el: UiElement): Vnode
-    # builder*: proc(ctxt: AppContext, el: UiElement): Vnode
-    
-proc addChild*(parent: var UiElement, child: UiElement) =
-  parent.children.add child
+    builder*: proc(el: UiElement): Vnode
+    ctxt*: AppContext
+    preventDefault*: bool
+
+var pid = 0
+template genId*: untyped =
+  inc(pid)
+  pid
+
+
+proc setElid*(el: var UiElement, parent: UiElement = nil) =
+  # get parent id
+  # concatenate and and
+  if parent != nil:
+    el.elid = $parent.elid & "." & $parent.children.len
+  else:
+    el.elid = $0
 
 
 proc add*(parent: var UiElement, child: UiElement) =
-  parent.children.add child
-
-
-proc build*(wb: WebBuilder, el: UiElement): VNode =
-  result = wb.builder(wb, el)
+  var c = child
+  c.setElid(parent)
+  parent.children.add c
+  
+  
+proc addChild*(parent: var UiElement, child: UiElement) =
+  parent.add child
 
   
 proc `$`*(el: UiElement): string =
-  result = "id: " & el.id
+  result = ""
+  result.add "\nelid: " & el.elid
+  result.add "\nparentid: " & el.parentid
+  result.add "\nid: " & el.id
   result.add "\nkind: " & $el.kind
   result.add "\nlabel: " & el.label
   result.add "\nvalue: " & el.value
@@ -67,30 +111,33 @@ proc `$`*(el: UiElement): string =
   for c in el.children:
     result.add " " & $c.kind
 
-proc newWebBuilder*(handler: proc(uiev: uielement.UiEvent,
-                                  el: UiElement, viewid: string): proc(ev: Event, n: VNode)): WebBuilder =
-  result = WebBuilder()
-  result.handler = handler  
-  for uievk in uielement.UiEventKind:
-    for kev in EventKind:
-      if $kev == ("on" & $uievk):
-        result.eventsMap.add(uievk, kev)
-        break
+
+proc `$`*(ctxt: AppContext): string =
+  result = ""
+  result.add "\nstate" & $ctxt.state
+  result.add "\nqueryString " & $ctxt.queryString
+  result.add "\nroute" & $ctxt.route
+  result.add "\neventsMap " & $ctxt.eventsMap
 
   
-proc addEvents*(n: var Vnode, wb: WebBuilder, el: UiElement) = 
-  for ev in el.events:
-    let targetKind = wb.eventsMap[ev.kind]
-    n.setAttr("eventhandler", ev.handler)
-    n.addEventListener(targetKind, wb.handler(ev, el, el.viewid))
+proc elid*(el: UiElement): string =
+  el.elid  
+
+
+proc addEvents*(n: var Vnode, el: UiElement) =
+  let ctxt = el.ctxt
+  if not ctxt.isNil:
+    for ev in el.events:
+      let targetKind = ctxt.eventsMap[ev.kind]
+      n.setAttr("eventhandler", ev.handler)    
+      let eh = ctxt.eventHandler(ev, el, el.viewid)
+      n.addEventListener(targetKind, eh)
 
 
 proc addAttributes*(n: var Vnode, el: UiElement) =
   if el.id!="": n.id = el.id
   if el.value != "":
     n.setAttr "value", el.value
-#   if el.field != "":
-#     n.setAttr "field", el.field
   for k, v in el.attributes.pairs:
     n.setAttr(k, v)
 
@@ -130,14 +177,9 @@ proc addEvent*(parent: var UiElement, event: UiEvent) =
   parent.events.add event
   
 
-proc addEvent*(e: var UiElement, evk: UiEventKind) =
-  var ev = UiEvent()
-  ev.kind = evk
-  e.events.add ev  
-
-
 proc newUiElement*(): UiElement =
-   result = UiElement()
+  result = UiElement()
+  result.elid = $genId()
 
 
 proc newUiElement*(kind: UiElementKind): UiElement =
@@ -152,10 +194,36 @@ proc newUiElement*(kind: UiElementKind, id, label: string): UiElement =
     result.label = label     
   if id != "":
     result.id = id
+
+  
+proc addEvent*(e: var UiElement, evk: UiEventKind) =
+  var ev = UiEvent()
+  ev.kind = evk
+  e.events.add ev  
+
+  
+proc newUiElement*(ctxt: AppContext): UiElement =
+  result = UiElement()
+  result.ctxt = ctxt
+  result.elid = $genId()
+
+
+proc newUiElement*(ctxt: AppContext, kind: UiElementKind): UiElement =
+  result = newUiElement(ctxt)
+  result.kind = kind
+
+
+proc newUiElement*(ctxt: AppContext, kind: UiElementKind, id, label: string): UiElement =
+  result = newUiElement(ctxt)
+  result.kind = kind
+  if label != "":
+    result.label = label     
+  if id != "":
+    result.id = id
     
     
-proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]): UiElement =
-  result = newUiElement(kind)
+proc newUiElement*(ctxt: AppContext, kind: UiElementKind, id, label="", events: seq[UiEventKind]): UiElement =
+  result = newUiElement(ctxt, kind)
   if label != "":
     result.label = label
 
@@ -167,9 +235,9 @@ proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]):
     result.events.add ev
 
       
-proc newUiElement*(kind: UiElementKind, label="",
+proc newUiElement*(ctxt: AppContext, kind: UiElementKind, label="",
                    attributes:Table[string, string], events: seq[UiEventKind]): UiElement =    
-  result = newUiElement(kind, label = label, events = events)
+  result = newUiElement(ctxt, kind, label = label, events = events)
   result.kind = kind
   result.attributes = attributes    
 
@@ -178,3 +246,177 @@ proc newUiEvent*(k: UiEventKind, handler: string):UiEvent =
   result = UiEvent()
   result.kind = k
   result.handler = handler
+
+
+# Messages
+proc newMessage*(content: string, kind: MessageKind): AppMessage =
+  result = AppMessage()
+  result.content = content
+  result.kind = kind
+
+
+proc newMessage*(content: string, title=""): AppMessage =
+  result = newMessage(content, MessageKind.normal)
+
+  
+proc newSuccessMessage*(content: string, title=""): AppMessage =
+  result = newMessage(content, MessageKind.success)
+
+  
+proc newWarningMessage*(content: string, title=""): AppMessage =
+  result = newMessage(content, MessageKind.warning)
+
+  
+proc newErrorMessage*(content: string, title=""): AppMessage =
+  result = newMessage(content, MessageKind.error)
+  
+
+proc newPrimaryMessage*(content: string, title=""): AppMessage =
+  result = newMessage(content, MessageKind.primary)
+
+
+proc addMessage*(ctxt: AppContext, kind: string, content: string,  title="") =
+  var msg: AppMessage  
+  case $kind
+  of "success":
+    msg = newSuccessMessage(content, title)
+  of "warning":
+    msg = newWarningMessage(content, title)
+  of "error":
+    msg = newErrorMessage(content, title)
+  of "primary":
+    msg = newPrimaryMessage(content, title)
+  else:
+    msg = newMessage(content, title)  
+  ctxt.messages.add msg
+
+  
+proc addMessage*(ctxt: AppContext, m: AppMessage) =
+  ctxt.messages.add m
+
+
+# Main
+proc reRender*()=
+  # wrap and expose redraw
+  `kxi`.redraw()
+
+
+proc noEventListener(payload: JsonNode, action: string): proc(payload: JsonNode) =
+  result = proc(payload: JsonNode) =
+    echo "WARNING: Action $1 not found in the table." % $action
+
+  
+proc callEventListener(payload: JsonNode,
+                        actions: Table[cstring, proc(payload: JsonNode)]) =
+
+  var eventListener: proc(payload: JsonNode)
+  var a, model, sitegen_action: string
+
+  let
+    nodeKind = payload["node_kind"].getStr
+    eventKind = payload["event_kind"].getStr.replace("on", "")
+    defaultNodeAction = "default_action_" & nodeKind & "_" & eventKind
+  
+  if payload.haskey("eventhandler"):
+    sitegen_action = payload["eventhandler"].getStr
+
+  else:
+    if payload.haskey("model"):
+      model = payload["model"].getStr
+    if payload.haskey("action"):
+      a = payload["action"].getStr
+    elif payload.haskey("field"): # field
+      a = payload["field"].getStr
+      
+    sitegen_action = "$1_$2_$3" % [model, a, eventKind]
+    
+  if actions.hasKey sitegen_action:
+    eventListener = actions[sitegen_action]
+  elif actions.hasKey defaultNodeAction:
+    eventListener = actions[defaultNodeAction]
+  elif actions.hasKey "sitegen_default_action":
+    # default action
+    eventListener = actions["sitegen_default_action"]
+  else:
+    eventListener = noEventListener(payload, sitegen_action)
+  eventListener payload
+
+  
+proc eventHandler(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode) =
+  let ctxt = el.ctxt
+  
+  result = proc(ev: Event, n: VNode) =
+    
+    if el.preventDefault:
+      ev.preventDefault()
+    let
+      evt = ev.`type`
+    
+    var
+      payload = %*{"value": %""}
+      event = %*{"type": %($evt)}
+
+    for k, v in n.attrs:
+      if k == "model":
+        payload["model"] = %($n.getAttr "model") #%model
+      if k == "value":
+        payload["value"] = %($n.getAttr "value")
+      
+    # TODO: improve event data passed.
+    if not evt.isNil and evt.contains "key":
+      event["keyCode"] = %(cast[KeyboardEvent](ev).keyCode)
+      event["key"] = %($cast[KeyboardEvent](ev).key)
+ 
+    payload["event"] = event
+    
+    if n.kind == VnodeKind.input:
+      payload["type"] = %($n.getAttr "type")
+
+    if payload.haskey("type") and (payload["type"].getStr == "date" or
+                                   payload["type"].getStr == "checkbox"):
+      # let the dom handle the events for the `input date`
+      discard
+    else:
+      ev.preventDefault()
+          
+    payload["node_kind"] = %($n.kind)
+    payload["event_kind"] = %uiev.kind
+    
+    if n.getAttr("action") != nil:
+      payload["action"] = %($n.getAttr "action")
+      
+    if n.getAttr("mode") != nil:
+      payload["mode"] = %($n.getAttr "mode")
+    
+    if n.getAttr("name") != nil:
+      payload["field"] = %($n.getAttr "name")
+
+    if n.getAttr("field") != nil:
+      payload["field"] = %($n.getAttr "field")
+    
+    if el.id != "":
+      payload["objid"] = %el.id
+
+    if not n.value.isNil and n.value != "":
+      payload["value"] = %($n.value)
+    
+    if payload.haskey "action":
+      #payload = ctxt.navigate(ctxt, payload, viewid)
+      callEventListener(payload, ctxt.actions)
+      reRender()
+      
+    elif n.getAttr("eventhandler") != nil:
+      payload["eventhandler"] = %($n.getAttr "eventhandler")
+      callEventListener(payload, ctxt.actions)
+  
+
+proc newAppContext*(): AppContext =
+  result = AppContext()
+  result.render = reRender
+  result.eventHandler = eventHandler
+  
+  for uievk in uielement.UiEventKind:
+    for kev in EventKind:
+      if $kev == ("on" & $uievk):
+        result.eventsMap.add(uievk, kev)
+        break

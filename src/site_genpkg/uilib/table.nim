@@ -5,7 +5,7 @@ import baseui
 import ../uielement
 
 
-proc buildTable(wb: WebBuilder, el: UiElement): VNode =
+proc buildTable(el: UiElement): VNode =
   result = buildHtml table(class="table")
   var
     h = buildHtml thead()
@@ -26,7 +26,7 @@ proc buildTable(wb: WebBuilder, el: UiElement): VNode =
       for col in c.children:
         var htcol = buildHtml td():
           if not col.builder.isNil:
-            col.builder(wb, col)
+            col.builder(col)
           else:
             text col.value
         
@@ -35,7 +35,7 @@ proc buildTable(wb: WebBuilder, el: UiElement): VNode =
           row.class = "c-hand"
           row.addAttributes col
 
-      row.addEvents wb, c
+      row.addEvents c
       b.add row
   result.add b
 

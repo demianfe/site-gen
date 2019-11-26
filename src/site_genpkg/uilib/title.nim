@@ -3,7 +3,7 @@ import site_genpkg / uielement
 import karax / [vdom, karaxdsl]
 
 
-proc builder(wb: WebBuilder, el: UiElement): Vnode =
+proc builder(el: UiElement): Vnode =
   let s = el.getAttribute "size"
   case s
   of "1":
@@ -24,7 +24,7 @@ proc builder(wb: WebBuilder, el: UiElement): Vnode =
   let txt = buildHtml text(el.value)
   result.add txt
   result.addAttributes el
-  result.addEvents wb, el
+  result.addEvents el
   
 
 proc Title*(value = "", size="1"): UiElement =

@@ -11,7 +11,7 @@ proc buildMenuItem(el: UiElement): Vnode =
         text el.value
   
   
-proc buildMenu*(wb: WebBuilder, menu: UiElement): VNode =
+proc buildMenu*(menu: UiElement): VNode =
   result = buildHtml():
     ul(class="menu"):
       li(class="divider", data-content=menu.value)
@@ -20,8 +20,8 @@ proc buildMenu*(wb: WebBuilder, menu: UiElement): VNode =
           buildMenuItem(menuItem)
 
 
-proc MenuItem*(label: string): UiElement =
-  result = newUiElement(UiElementKind.kMenuItem, label=label, events = @[UiEventKind.click])
+proc MenuItem*(ctxt: AppContext, label: string): UiElement =
+  result = newUiElement(ctxt, UiElementKind.kMenuItem, label=label, events = @[UiEventKind.click])
 
   
 proc Menu*(label="", menuItems: seq[UiElement]): UiElement =

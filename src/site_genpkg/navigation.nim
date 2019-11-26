@@ -2,7 +2,8 @@
 import json, tables, strutils, times
 import uuidjs
 
-import appcontext
+#import appcontext
+import uielement
 
 proc newView(action, model, sourceId: string, payload: JsonNode, mode = ""):JSonNode =
   result  = %*{

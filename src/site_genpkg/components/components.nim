@@ -1,7 +1,7 @@
 
 import tables, json
 
-import ../ui_utils
+import ../ui_utils, ../uielement
 import showmodel, listmodel, editmodel, datepicker, messages
 export showmodel, listmodel, editmodel, datepicker, messages
 

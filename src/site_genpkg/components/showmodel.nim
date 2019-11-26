@@ -1,6 +1,6 @@
 
 import json, tables, sequtils, strutils, unicode
-import ../ui_utils, ./detailmodel, ./listmodel
+import ../uielement, ../ui_utils, ./detailmodel, ./listmodel
 
 
 proc ShowModel*(ctxt: AppContext, def: JsonNode, data: JsonNode = nil): JsonNode =

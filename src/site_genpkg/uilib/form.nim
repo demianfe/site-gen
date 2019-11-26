@@ -3,7 +3,7 @@ import karax / [vdom, karaxdsl]
 import ../uielement, ../ui_utils
 
 
-proc buildForm(wb: WebBuilder, el: UiElement): VNode =
+proc buildForm(el: UiElement): VNode =
   result = buildHtml(form())
 
 

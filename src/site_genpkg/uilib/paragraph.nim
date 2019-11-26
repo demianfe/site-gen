@@ -3,10 +3,10 @@ import site_genpkg / uielement
 import karax / [vdom, karaxdsl]
 
 
-proc builder(wb: WebBuilder, el: UiElement): Vnode =
+proc builder(el: UiElement): Vnode =
   result = buildHtml p: text el.value
   result.addAttributes el
-  result.addEvents wb, el
+  result.addEvents el
   
 
 proc Paragraph*(id, value = ""): UiElement =

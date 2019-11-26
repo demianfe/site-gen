@@ -1,6 +1,6 @@
 
 import json, strutils
-import ../appcontext, ../uielement, ../uilib, ../tstore
+import  ../uielement, ../uilib, ../tstore
 
 
 # TODO: call label gen
@@ -18,13 +18,13 @@ proc UiEdit*(ctxt: AppContext, viewid, route: string): UiElement =
   for k,v in current.data:
     if v.kind == JString:
       # add input text
-      var inputTxt = InputText(label = k)
+      var inputTxt = InputText(ctxt, label = k)
       inputTxt.setAttribute("model", current.`type`)
       inputTxt.setAttribute("name", k)
       inputTxt.value = v.getStr
       inputTxt.id = current.id   
       form.addChild inputTxt
   
-  form.addChild Button("Save")
+  form.addChild Button(ctxt, "Save")
   result.addChild form
   

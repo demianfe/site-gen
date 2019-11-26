@@ -1,6 +1,6 @@
 
 import json, tables, sequtils, strutils, unicode
-import ../ui_utils
+import ../ui_utils, ../uielement
 
 
 proc sectionHeader(ctxt: AppContext, templates, obj: JsonNode): JsonNode =
